@@ -218,7 +218,7 @@ export default function PresentationMode({ isOpen, onClose, files, projectTitle 
         {/* Scrollable Masonry Content */}
         <motion.div
           ref={containerRef}
-          className="w-full h-full overflow-y-auto overflow-x-hidden px-8 py-24"
+          className="w-full h-full overflow-y-auto overflow-x-hidden py-24"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -234,14 +234,14 @@ export default function PresentationMode({ isOpen, onClose, files, projectTitle 
           `}</style>
 
           {/* Masonry Grid */}
-          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-6 space-y-6">
+          <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-4 px-4">
             {files.map((file, index) => {
               const randomHeight = ["h-64", "h-80", "h-96", "h-72", "h-88", "h-60", "h-84", "h-92"][index % 8]
 
               return (
                 <motion.div
                   key={file.id}
-                  className={`break-inside-avoid mb-6 ${randomHeight} group cursor-pointer`}
+                  className={`break-inside-avoid mb-4 ${randomHeight} group cursor-pointer`}
                   variants={cardVariants}
                   whileHover="hover"
                   custom={index}

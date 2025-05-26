@@ -106,6 +106,60 @@ class DataService {
     return fileDetails[id] || null
   }
 
+  async getFileByProjectAndId(projectName: string, fileId: string): Promise<FileDetail | null> {
+    console.log(`Looking for file: ${fileId} in project: ${projectName}`)
+
+    // Get the project data to find the actual file
+    const projects = await this.getProjects()
+    const projectFiles = projects[projectName] || []
+
+    let targetFile: ProjectFile | null = null
+    let targetProject: Project | null = null
+
+    // Find the specific file in the project
+    for (const project of projectFiles) {
+      const file = project.files.find((f) => f.id.toString() === fileId)
+      if (file) {
+        targetFile = file
+        targetProject = project
+        break
+      }
+    }
+
+    console.log(`Found file:`, targetFile)
+
+    if (!targetFile || !targetProject) {
+      console.log(`File ${fileId} not found in project ${projectName}`)
+      return null
+    }
+
+    // Create a unique file detail that matches the clicked file
+    const fileDetail: FileDetail = {
+      id: fileId,
+      title: `${targetProject.title} - File ${fileId}`,
+      description: `This is file ${fileId} from the ${targetProject.title} project in ${projectName}. This file showcases the creative work and design elements that are part of this project's vision.`,
+      image: targetFile.image, // Use the exact image from the clicked file
+      author: {
+        name: "Creative Team",
+        avatar: `https://picsum.photos/seed/author${fileId}/100/100`,
+        username: "@creativeteam",
+      },
+      stats: {
+        likes: Math.floor(Math.random() * 200) + 10,
+        comments: Math.floor(Math.random() * 50) + 1,
+        views: Math.floor(Math.random() * 1000) + 100,
+      },
+      tags: [targetProject.title.toLowerCase().replace(/\s+/g, "-"), "design", "creative"],
+      type: targetFile.type === "video" ? "video" : targetFile.type === "animation" ? "animation" : "image",
+      category: projectName,
+      createdAt: "2 days ago",
+      project: projectName,
+    }
+
+    console.log(`Generated file detail:`, fileDetail)
+    return fileDetail
+  }
+
   async getProjectsByName(projectName: string): Promise<Project[]> {
     const projects = await this.getProjects()
     return projects[projectName] || []

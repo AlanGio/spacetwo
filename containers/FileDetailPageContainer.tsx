@@ -29,7 +29,12 @@ export default function FileDetailPageContainer({ fileId, projectName }: FileDet
     const fetchData = async () => {
       try {
         setLoading(true)
-        const [profiles, file] = await Promise.all([dataService.getSidebarProfiles(), dataService.getFileById(fileId)])
+        const profiles = await dataService.getSidebarProfiles()
+
+        // Use different method based on whether we have project context
+        const file = projectName
+          ? await dataService.getFileByProjectAndId(projectName, fileId)
+          : await dataService.getFileById(fileId)
 
         setSidebarProfiles(profiles)
         setFileData(file)
@@ -41,7 +46,7 @@ export default function FileDetailPageContainer({ fileId, projectName }: FileDet
     }
 
     fetchData()
-  }, [fileId])
+  }, [fileId, projectName])
 
   const handleSidebarClick = (profile: SidebarProfile) => {
     router.push(`/project/${toSlug(profile.name)}`)
