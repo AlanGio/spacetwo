@@ -60,7 +60,7 @@ export default function CommunityView({
           <AnimatePresence mode="wait">
             <motion.div
               key={activeFilter}
-              className="grid grid-cols-3 gap-6"
+              className="grid grid-cols-3 gap-6 mb-18"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
