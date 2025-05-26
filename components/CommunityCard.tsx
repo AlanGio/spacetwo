@@ -155,14 +155,16 @@ export default function CommunityCard({ card, className = "col-span-1", index, a
             <span className="text-sm text-[#827989]">{card.title}</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-[#827989]">
-            <motion.div
-              className="flex items-center gap-1"
-              whileHover={{ scale: 1.1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
-            >
-              <span>{card.likes}</span>
-              <Heart className="w-3 h-3" />
-            </motion.div>
+            {card.likes > 0 && (
+              <motion.div
+                className="flex items-center gap-1"
+                whileHover={{ scale: 1.1 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <span>{card.likes}</span>
+                <Heart className="w-3 h-3" />
+              </motion.div>
+            )}
             <motion.div
               className="flex items-center gap-1"
               whileHover={{ scale: 1.1 }}
