@@ -1,18 +1,34 @@
-"use client"
+"use client";
 
-import FileDetailPageContainer from "../../../../../containers/FileDetailPageContainer"
-import { getProjectNameFromSlug } from "../../../../../lib/url-utils"
+import { use } from "react";
+import FileDetailPageContainer from "../../../../../containers/FileDetailPageContainer";
+import { getProjectNameFromSlug } from "../../../../../lib/url-utils";
 
 interface ProjectFilePageProps {
-  params: {
-    projectName: string
-    fileId: string
-  }
+  params: Promise<{
+    projectName: string;
+    fileId: string;
+  }>;
 }
 
 export default function Page({ params }: ProjectFilePageProps) {
-  const availableProjects = ["Spacetwo Studio", "Photoshop Projects", "Nike Space", "Design System", "Open Source"]
-  const projectName = getProjectNameFromSlug(params.projectName, availableProjects)
+  const resolvedParams = use(params);
+  const availableProjects = [
+    "Spacetwo Studio",
+    "Photoshop Projects",
+    "Nike Space",
+    "Design System",
+    "Open Source",
+  ];
+  const projectName = getProjectNameFromSlug(
+    resolvedParams.projectName,
+    availableProjects
+  );
 
-  return <FileDetailPageContainer fileId={params.fileId} projectName={projectName} />
+  return (
+    <FileDetailPageContainer
+      fileId={resolvedParams.fileId}
+      projectName={projectName}
+    />
+  );
 }

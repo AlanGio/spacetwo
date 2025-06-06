@@ -1,17 +1,28 @@
-"use client"
+"use client";
 
-import ProjectPageContainer from "../../../containers/ProjectPageContainer"
-import { getProjectNameFromSlug } from "../../../lib/url-utils"
+import { use } from "react";
+import ProjectPageContainer from "../../../containers/ProjectPageContainer";
+import { getProjectNameFromSlug } from "../../../lib/url-utils";
 
 interface ProjectPageProps {
-  params: {
-    projectName: string
-  }
+  params: Promise<{
+    projectName: string;
+  }>;
 }
 
 export default function Page({ params }: ProjectPageProps) {
-  const availableProjects = ["Spacetwo Studio", "Photoshop Projects", "Nike Space", "Design System", "Open Source"]
-  const projectName = getProjectNameFromSlug(params.projectName, availableProjects)
+  const resolvedParams = use(params);
+  const availableProjects = [
+    "Spacetwo Studio",
+    "Photoshop Projects",
+    "Nike Space",
+    "Design System",
+    "Open Source",
+  ];
+  const projectName = getProjectNameFromSlug(
+    resolvedParams.projectName,
+    availableProjects
+  );
 
-  return <ProjectPageContainer projectName={projectName} />
+  return <ProjectPageContainer projectName={projectName} />;
 }
