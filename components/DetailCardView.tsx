@@ -122,7 +122,7 @@ const dropdownVariants = {
 }
 
 interface DetailFile {
-  id: number
+  id: string
   name: string
   type: "image" | "video" | "design"
   preview: string
@@ -159,21 +159,24 @@ const sortOptions: SortOption[] = ["Last modified", "Most Liked", "Most Commente
 export default function DetailCardView({ projectName, cardId, projectData }: DetailCardViewProps) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [isPresentationOpen, setIsPresentationOpen] = useState(false)
-  const [navigatingFileId, setNavigatingFileId] = useState<number | null>(null)
+  const [navigatingFileId, setNavigatingFileId] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<SortOption>("Last modified")
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const router = useRouter()
 
-  // Generate files with mock data for sorting
+  // Generate files with mock data for sorting - keep original file IDs
+  // Use useMemo or keep this stable to prevent re-sorting during navigation
   const baseFiles: DetailFile[] =
     projectData?.files.map((file, index) => {
-      const randomMinutes = Math.floor(Math.random() * 1440) // Random minutes in a day
-      const randomLikes = Math.floor(Math.random() * 200) + 10
-      const randomComments = Math.floor(Math.random() * 50) + 1
+      // Use file.id as seed for consistent random values
+      const seed = Number.parseInt(file.id) || index
+      const randomMinutes = (seed * 37) % 1440 // Deterministic "random" based on file ID
+      const randomLikes = ((seed * 73) % 200) + 10
+      const randomComments = ((seed * 41) % 50) + 1
 
       return {
-        id: Number.parseInt(file.id),
-        name: `File ${index + 1}`,
+        id: file.id,
+        name: `File ${file.id}`,
         type: (index % 3 === 0 ? "image" : index % 3 === 1 ? "video" : "design") as "image" | "video" | "design",
         preview: file.image,
         lastEdited: `Edited ${Math.floor(randomMinutes / 60) || 1} ${randomMinutes >= 60 ? "hours" : "minutes"} ago`,
@@ -181,26 +184,28 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
         likes: randomLikes,
         comments: randomComments,
         collaborators: [
-          { id: 1, avatar: `https://picsum.photos/seed/user${index}1/100/100`, name: "User 1" },
-          { id: 2, avatar: `https://picsum.photos/seed/user${index}2/100/100`, name: "User 2" },
+          { id: 1, avatar: `https://picsum.photos/seed/user${file.id}1/100/100`, name: "User 1" },
+          { id: 2, avatar: `https://picsum.photos/seed/user${file.id}2/100/100`, name: "User 2" },
         ],
-        additionalCollaborators: Math.floor(Math.random() * 4),
+        additionalCollaborators: seed % 4,
       }
     }) || []
 
-  // Sort files based on selected option
-  const sortedFiles = [...baseFiles].sort((a, b) => {
-    switch (sortBy) {
-      case "Last modified":
-        return b.lastModifiedTimestamp - a.lastModifiedTimestamp
-      case "Most Liked":
-        return b.likes - a.likes
-      case "Most Commented":
-        return b.comments - a.comments
-      default:
-        return 0
-    }
-  })
+  // Sort files based on selected option - only when not navigating
+  const sortedFiles = navigatingFileId
+    ? baseFiles // Keep original order during navigation to prevent reordering
+    : [...baseFiles].sort((a, b) => {
+        switch (sortBy) {
+          case "Last modified":
+            return b.lastModifiedTimestamp - a.lastModifiedTimestamp
+          case "Most Liked":
+            return b.likes - a.likes
+          case "Most Commented":
+            return b.comments - a.comments
+          default:
+            return 0
+        }
+      })
 
   const getFileIcon = (type: string) => {
     switch (type) {
@@ -213,16 +218,20 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
     }
   }
 
-  const handleFileClick = async (fileId: number) => {
+  const handleFileClick = async (fileId: string) => {
+    console.log(`Clicking on file: ${fileId} in project: ${projectName}`)
+
+    // Set navigating state immediately to prevent reordering
     setNavigatingFileId(fileId)
 
-    // Add a small delay for the animation to be visible
-    await new Promise((resolve) => setTimeout(resolve, 200))
-
+    // Navigate immediately without delay to prevent visual glitches
     router.push(`/project/${toSlug(projectName)}/file/${fileId}`)
   }
 
   const handleSortChange = (option: SortOption) => {
+    // Don't allow sorting changes during navigation
+    if (navigatingFileId) return
+
     setSortBy(option)
     setIsDropdownOpen(false)
   }
@@ -238,6 +247,7 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
         <button
           className="p-0 border-0 bg-transparent hover:opacity-80 transition-opacity"
           onClick={() => setIsPresentationOpen(true)}
+          disabled={!!navigatingFileId} // Disable during navigation
         >
           <Image src="/icons/display_mode.svg" alt="Display mode" width={110} height={26} className="w-auto h-6" />
         </button>
@@ -250,7 +260,8 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
           <Button
             variant="ghost"
             className="text-[#827989] hover:text-white hover:bg-transparent flex items-center gap-2"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            onClick={() => !navigatingFileId && setIsDropdownOpen(!isDropdownOpen)} // Disable during navigation
+            disabled={!!navigatingFileId}
           >
             {sortBy}
             <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
@@ -258,7 +269,7 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
 
           {/* Dropdown Menu */}
           <AnimatePresence>
-            {isDropdownOpen && (
+            {isDropdownOpen && !navigatingFileId && (
               <motion.div
                 variants={dropdownVariants}
                 initial="hidden"
@@ -295,7 +306,8 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
             variant="ghost"
             size="sm"
             className={`${viewMode === "grid" ? "text-white bg-[#333333]" : "text-[#827989] hover:text-white"}`}
-            onClick={() => setViewMode("grid")}
+            onClick={() => !navigatingFileId && setViewMode("grid")} // Disable during navigation
+            disabled={!!navigatingFileId}
           >
             <Grid3X3 className="w-4 h-4" />
           </Button>
@@ -303,7 +315,8 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
             variant="ghost"
             size="sm"
             className={`${viewMode === "list" ? "text-white bg-[#333333]" : "text-[#827989] hover:text-white"}`}
-            onClick={() => setViewMode("list")}
+            onClick={() => !navigatingFileId && setViewMode("list")} // Disable during navigation
+            disabled={!!navigatingFileId}
           >
             <List className="w-4 h-4" />
           </Button>
@@ -313,121 +326,118 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
       {/* Files Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-6">
-          <AnimatePresence mode="wait">
-            {viewMode === "grid" ? (
-              <motion.div
-                key={`grid-view-${sortBy}`}
-                className="grid grid-cols-3 gap-6"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                {sortedFiles.map((file, index) => (
-                  <motion.div
-                    key={file.id}
-                    className={`group cursor-pointer ${navigatingFileId === file.id ? "pointer-events-none" : ""}`}
-                    variants={cardVariants}
-                    whileHover="hover"
-                    whileTap="tap"
-                    custom={index}
-                    onClick={() => handleFileClick(file.id)}
+          <motion.div
+            key={`${viewMode}-view-${sortBy}`}
+            className={viewMode === "grid" ? "grid grid-cols-3 gap-6" : "space-y-4"}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          >
+            {sortedFiles.map((file, index) =>
+              viewMode === "grid" ? (
+                <motion.div
+                  key={file.id}
+                  className="group cursor-pointer"
+                  variants={cardVariants}
+                  whileHover={navigatingFileId ? {} : "hover"} // Disable hover during navigation
+                  whileTap={navigatingFileId ? {} : "tap"} // Disable tap during navigation
+                  custom={index}
+                  onClick={() => !navigatingFileId && handleFileClick(file.id)} // Prevent multiple clicks
+                  style={{
+                    pointerEvents: navigatingFileId ? "none" : "auto", // Disable all interactions during navigation
+                  }}
+                >
+                  <div
+                    className={`bg-[#1a1a1a] rounded-xl overflow-hidden transition-all duration-300 hover:bg-[#222222] border border-[#333333] hover:border-[#444444] ${
+                      navigatingFileId === file.id ? "opacity-70" : ""
+                    }`}
                   >
-                    <div
-                      className={`bg-[#1a1a1a] rounded-xl overflow-hidden transition-all duration-300 hover:bg-[#222222] border border-[#333333] hover:border-[#444444] ${
-                        navigatingFileId === file.id ? "scale-95 opacity-70" : ""
-                      }`}
-                    >
-                      {/* Main Image */}
-                      <div className="relative aspect-square overflow-hidden">
-                        <Image
-                          src={file.preview || "/placeholder.svg"}
-                          alt={file.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
+                    {/* Main Image */}
+                    <div className="relative aspect-square overflow-hidden">
+                      <Image
+                        src={file.preview || "/placeholder.svg"}
+                        alt={file.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
 
-                        {/* File Type Icon - Bottom Left */}
-                        <div className="absolute bottom-3 left-3">
-                          <div className="w-8 h-8 bg-black/70 backdrop-blur-sm rounded-lg flex items-center justify-center text-white">
-                            {getFileIcon(file.type)}
-                          </div>
+                      {/* File Type Icon - Bottom Left */}
+                      <div className="absolute bottom-3 left-3">
+                        <div className="w-8 h-8 bg-black/70 backdrop-blur-sm rounded-lg flex items-center justify-center text-white">
+                          {getFileIcon(file.type)}
                         </div>
-
-                        {/* Stats Badge - Top Right */}
-                        {sortBy !== "Last modified" && (
-                          <div className="absolute top-3 right-3">
-                            <div className="px-2 py-1 bg-black/70 backdrop-blur-sm rounded text-xs text-white font-medium">
-                              {sortBy === "Most Liked" ? `${file.likes} ♥` : `${file.comments} 💬`}
-                            </div>
-                          </div>
-                        )}
                       </div>
 
-                      {/* Card Footer */}
-                      <div className="p-4">
-                        <div className="flex items-start justify-between">
-                          {/* File Info */}
-                          <div className="flex-1 min-w-0 pr-3">
-                            <h3 className="text-white font-semibold text-base truncate mb-1">{file.name}</h3>
-                            <p className="text-[#827989] text-sm">{file.lastEdited}</p>
+                      {/* Stats Badge - Top Right */}
+                      {sortBy !== "Last modified" && (
+                        <div className="absolute top-3 right-3">
+                          <div className="px-2 py-1 bg-black/70 backdrop-blur-sm rounded text-xs text-white font-medium">
+                            {sortBy === "Most Liked" ? `${file.likes} ♥` : `${file.comments} 💬`}
                           </div>
+                        </div>
+                      )}
 
-                          {/* Collaborators */}
-                          <div className="flex-shrink-0">
-                            <div className="flex items-center -space-x-2">
-                              {file.collaborators.slice(0, 3).map((collaborator, idx) => (
-                                <motion.div
-                                  key={collaborator.id}
-                                  className="relative"
-                                  initial={{ opacity: 0, scale: 0 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  transition={{ delay: 0.1 + idx * 0.05 }}
-                                  whileHover={{ scale: 1.1, zIndex: 10 }}
-                                >
-                                  <Image
-                                    src={collaborator.avatar || "/placeholder.svg"}
-                                    alt={collaborator.name}
-                                    width={28}
-                                    height={28}
-                                    className="w-7 h-7 rounded-full object-cover border-2 border-[#1a1a1a] hover:border-[#333333] transition-colors"
-                                  />
-                                </motion.div>
-                              ))}
-                              {file.additionalCollaborators && file.additionalCollaborators > 0 && (
-                                <motion.div
-                                  className="w-7 h-7 bg-[#333333] rounded-full flex items-center justify-center text-xs text-[#827989] font-medium border-2 border-[#1a1a1a]"
-                                  initial={{ opacity: 0, scale: 0 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  transition={{ delay: 0.25 }}
-                                  whileHover={{ scale: 1.1 }}
-                                >
-                                  +{file.additionalCollaborators}
-                                </motion.div>
-                              )}
-                            </div>
+                      {/* Loading overlay for navigating file */}
+                      {navigatingFileId === file.id && (
+                        <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Card Footer */}
+                    <div className="p-4">
+                      <div className="flex items-start justify-between">
+                        {/* File Info */}
+                        <div className="flex-1 min-w-0 pr-3">
+                          <h3 className="text-white font-semibold text-base truncate mb-1">{file.name}</h3>
+                          <p className="text-[#827989] text-sm">{file.lastEdited}</p>
+                        </div>
+
+                        {/* Collaborators */}
+                        <div className="flex-shrink-0">
+                          <div className="flex items-center -space-x-2">
+                            {file.collaborators.slice(0, 3).map((collaborator, idx) => (
+                              <motion.div
+                                key={collaborator.id}
+                                className="relative"
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.1 + idx * 0.05 }}
+                                whileHover={{ scale: 1.1, zIndex: 10 }}
+                              >
+                                <Image
+                                  src={collaborator.avatar || "/placeholder.svg"}
+                                  alt={collaborator.name}
+                                  width={28}
+                                  height={28}
+                                  className="w-7 h-7 rounded-full object-cover border-2 border-[#1a1a1a] hover:border-[#333333] transition-colors"
+                                />
+                              </motion.div>
+                            ))}
+                            {file.additionalCollaborators && file.additionalCollaborators > 0 && (
+                              <motion.div
+                                className="w-7 h-7 bg-[#333333] rounded-full flex items-center justify-center text-xs text-[#827989] font-medium border-2 border-[#1a1a1a]"
+                                initial={{ opacity: 0, scale: 0 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.25 }}
+                                whileHover={{ scale: 1.1 }}
+                              >
+                                +{file.additionalCollaborators}
+                              </motion.div>
+                            )}
                           </div>
                         </div>
                       </div>
                     </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            ) : (
-              <motion.div
-                key={`list-view-${sortBy}`}
-                className="space-y-4"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-              >
-                {sortedFiles.map((file, index) => (
-                  <FileListItem key={file.id} file={file} index={index} projectName={projectName} />
-                ))}
-              </motion.div>
+                  </div>
+                </motion.div>
+              ) : (
+                <FileListItem key={file.id} file={file} index={index} projectName={projectName} />
+              ),
             )}
-          </AnimatePresence>
+          </motion.div>
         </div>
       </div>
 
@@ -440,7 +450,9 @@ export default function DetailCardView({ projectName, cardId, projectData }: Det
       />
 
       {/* Click outside to close dropdown */}
-      {isDropdownOpen && <div className="fixed inset-0 z-0" onClick={() => setIsDropdownOpen(false)} />}
+      {isDropdownOpen && !navigatingFileId && (
+        <div className="fixed inset-0 z-0" onClick={() => setIsDropdownOpen(false)} />
+      )}
     </motion.div>
   )
 }
