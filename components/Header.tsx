@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import SearchBar from "./SearchBar";
+import UserProfile from "./UserProfile";
 
 interface HeaderProps {
   currentView: "community" | "project";
@@ -54,7 +55,7 @@ export default function Header({
       </div>
 
       {/* Search Bar */}
-      <div className="flex-1 max-w-lg mx-8">
+      <div className="flex-1 max-w-md mx-8">
         <SearchBar />
       </div>
 
@@ -124,6 +125,9 @@ export default function Header({
         >
           <MoreHorizontal className="w-4 h-4" />
         </Button>
+
+        {/* User Profile */}
+        <UserProfile />
       </div>
     </div>
   );
