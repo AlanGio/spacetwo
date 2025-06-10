@@ -138,17 +138,21 @@ export default function SearchBar({ onSearchToggle }: SearchBarProps) {
   return (
     <div className="relative" ref={searchRef}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#827989] w-4 h-4" />
+        <Search className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-[#827989] w-3 sm:w-4 h-3 sm:h-4" />
         <Input
           ref={inputRef}
           type="text"
-          placeholder="Search files... (⌘K)"
+          placeholder="Search..."
           value={query}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
-          className="pl-10 pr-4 bg-[#333333] border-[#444444] text-white placeholder-[#827989] focus:border-[#5865f2] focus:ring-[#5865f2] w-full"
+          className="pl-8 sm:pl-10 pr-2 sm:pr-4 h-8 sm:h-10 bg-[#333333] border-[#444444] text-white placeholder-[#827989] focus:border-[#5865f2] focus:ring-[#5865f2] w-full text-sm sm:text-base"
         />
+        {/* Desktop keyboard hint */}
+        <div className="hidden sm:block absolute right-2 top-1/2 transform -translate-y-1/2 text-[#827989] text-xs px-1.5 py-0.5 bg-[#444444] rounded border border-[#555555]">
+          ⌘K
+        </div>
       </div>
 
       {isOpen && results.length > 0 && (
@@ -157,12 +161,12 @@ export default function SearchBar({ onSearchToggle }: SearchBarProps) {
             <button
               key={file.id}
               onClick={() => handleFileClick(file.id)}
-              className={`w-full px-4 py-3 text-left hover:bg-[#333333] transition-colors border-b border-[#333333] last:border-b-0 focus:outline-none focus:bg-[#333333] ${
+              className={`w-full px-3 sm:px-4 py-2 sm:py-3 text-left hover:bg-[#333333] transition-colors border-b border-[#333333] last:border-b-0 focus:outline-none focus:bg-[#333333] ${
                 selectedIndex === index ? "bg-[#333333]" : ""
               }`}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-lg overflow-hidden flex-shrink-0">
                   <Image
                     src={file.image}
                     alt={file.title}
@@ -172,10 +176,10 @@ export default function SearchBar({ onSearchToggle }: SearchBarProps) {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-white font-medium text-sm truncate">
+                  <h4 className="text-white font-medium text-xs sm:text-sm truncate">
                     {file.title}
                   </h4>
-                  <p className="text-[#827989] text-xs truncate">
+                  <p className="text-[#827989] text-xs truncate hidden sm:block">
                     {file.description}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
@@ -189,7 +193,10 @@ export default function SearchBar({ onSearchToggle }: SearchBarProps) {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-[#827989] text-xs">
-                  <span>{file.stats.likes} likes</span>
+                  <span className="hidden sm:inline">
+                    {file.stats.likes} likes
+                  </span>
+                  <span className="sm:hidden">{file.stats.likes}</span>
                 </div>
               </div>
             </button>
@@ -199,7 +206,7 @@ export default function SearchBar({ onSearchToggle }: SearchBarProps) {
 
       {isOpen && query.trim() !== "" && results.length === 0 && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-[#222222] border border-[#333333] rounded-lg shadow-lg z-50">
-          <div className="px-4 py-3 text-[#827989] text-sm">
+          <div className="px-3 sm:px-4 py-2 sm:py-3 text-[#827989] text-xs sm:text-sm">
             No files found matching "{query}"
           </div>
         </div>

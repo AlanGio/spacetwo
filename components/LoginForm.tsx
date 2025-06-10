@@ -25,56 +25,56 @@ export default function LoginForm({ error }: LoginFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#111111] to-[#1a1a1a] flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decorative elements */}
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#111111] to-[#1a1a1a] flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+      {/* Background decorative elements - Hidden on mobile for better performance */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Gradient orbs */}
-        <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-[#5865f2]/20 to-[#7c3aed]/20 rounded-full blur-3xl animate-pulse"></div>
+        {/* Gradient orbs - Smaller and fewer on mobile */}
+        <div className="absolute top-10 sm:top-20 left-5 sm:left-20 w-48 sm:w-72 h-48 sm:h-72 bg-gradient-to-r from-[#5865f2]/15 sm:from-[#5865f2]/20 to-[#7c3aed]/15 sm:to-[#7c3aed]/20 rounded-full blur-2xl sm:blur-3xl animate-pulse"></div>
         <div
-          className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-to-r from-[#ec4899]/20 to-[#f97316]/20 rounded-full blur-3xl animate-pulse"
+          className="absolute bottom-10 sm:bottom-20 right-5 sm:right-20 w-56 sm:w-96 h-56 sm:h-96 bg-gradient-to-r from-[#ec4899]/15 sm:from-[#ec4899]/20 to-[#f97316]/15 sm:to-[#f97316]/20 rounded-full blur-2xl sm:blur-3xl animate-pulse"
           style={{ animationDelay: "1s" }}
         ></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-[#06b6d4]/10 to-[#8b5cf6]/10 rounded-full blur-2xl"></div>
+        <div className="hidden sm:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gradient-to-r from-[#06b6d4]/10 to-[#8b5cf6]/10 rounded-full blur-2xl"></div>
 
-        {/* Geometric shapes */}
+        {/* Geometric shapes - Hidden on small mobile, smaller on larger mobile */}
         <div
-          className="absolute top-32 right-32 w-20 h-20 border border-[#5865f2]/30 rotate-45 animate-spin"
+          className="hidden sm:block absolute top-32 right-32 w-12 sm:w-20 h-12 sm:h-20 border border-[#5865f2]/30 rotate-45 animate-spin"
           style={{ animationDuration: "20s" }}
         ></div>
-        <div className="absolute bottom-32 left-32 w-16 h-16 bg-gradient-to-r from-[#ec4899]/20 to-[#f97316]/20 rotate-12"></div>
+        <div className="hidden md:block absolute bottom-32 left-32 w-12 sm:w-16 h-12 sm:h-16 bg-gradient-to-r from-[#ec4899]/20 to-[#f97316]/20 rotate-12"></div>
         <div
-          className="absolute top-1/4 left-1/4 w-6 h-6 bg-[#5865f2]/40 rounded-full animate-bounce"
+          className="hidden sm:block absolute top-1/4 left-1/4 w-4 sm:w-6 h-4 sm:h-6 bg-[#5865f2]/40 rounded-full animate-bounce"
           style={{ animationDelay: "0.5s" }}
         ></div>
         <div
-          className="absolute bottom-1/4 right-1/4 w-8 h-8 bg-[#7c3aed]/40 rounded-full animate-bounce"
+          className="hidden sm:block absolute bottom-1/4 right-1/4 w-6 sm:w-8 h-6 sm:h-8 bg-[#7c3aed]/40 rounded-full animate-bounce"
           style={{ animationDelay: "0.7s" }}
         ></div>
       </div>
 
       {/* Main content */}
-      <div className="relative z-10 w-full max-w-md">
+      <div className="relative z-10 w-full max-w-sm sm:max-w-md">
         {/* Logo and branding */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-[#5865f2] to-[#7c3aed] rounded-2xl mb-6 shadow-lg shadow-[#5865f2]/25">
-            <Sparkles className="w-10 h-10 text-white" />
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="inline-flex items-center justify-center w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-r from-[#5865f2] to-[#7c3aed] rounded-xl sm:rounded-2xl mb-4 sm:mb-6 shadow-lg shadow-[#5865f2]/25">
+            <Sparkles className="w-8 sm:w-10 h-8 sm:h-10 text-white" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-3">
+          <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent mb-2 sm:mb-3">
             SpaceTwo
           </h1>
-          <p className="text-[#827989] text-lg font-medium">
+          <p className="text-[#827989] text-base sm:text-lg font-medium px-2">
             Welcome to the future of design
           </p>
-          <p className="text-[#64748b] text-sm mt-1">
+          <p className="text-[#64748b] text-sm mt-1 px-2">
             Sign in to access your creative community
           </p>
         </div>
 
         {/* Error message */}
         {error && (
-          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 backdrop-blur-sm">
-            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p className="text-red-400 text-sm">
+          <div className="mb-6 sm:mb-8 p-3 sm:p-4 bg-red-500/10 border border-red-500/20 rounded-lg sm:rounded-xl flex items-center gap-3 backdrop-blur-sm mx-2 sm:mx-0">
+            <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 text-red-400 flex-shrink-0" />
+            <p className="text-red-400 text-xs sm:text-sm">
               {error === "auth_error"
                 ? "Authentication failed. Please try again."
                 : "An error occurred during sign in."}
@@ -83,17 +83,20 @@ export default function LoginForm({ error }: LoginFormProps) {
         )}
 
         {/* Login form */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-2xl mx-2 sm:mx-0">
           <Button
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full h-14 bg-white hover:bg-gray-50 text-gray-900 font-semibold text-base flex items-center justify-center gap-4 transition-all duration-200 rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full h-12 sm:h-14 bg-white hover:bg-gray-50 text-gray-900 font-semibold text-sm sm:text-base flex items-center justify-center gap-3 sm:gap-4 transition-all duration-200 rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] touch-manipulation"
           >
             {isLoading ? (
-              <div className="w-6 h-6 border-3 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+              <div className="w-5 sm:w-6 h-5 sm:h-6 border-2 sm:border-3 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
             ) : (
               <>
-                <svg className="w-6 h-6" viewBox="0 0 24 24">
+                <svg
+                  className="w-5 sm:w-6 h-5 sm:h-6 flex-shrink-0"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     fill="#4285F4"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -111,33 +114,33 @@ export default function LoginForm({ error }: LoginFormProps) {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                Continue with Google
+                <span className="truncate">Continue with Google</span>
               </>
             )}
           </Button>
 
           {/* Additional info */}
-          <div className="mt-8 pt-6 border-t border-white/10">
-            <div className="flex items-center justify-center gap-6 text-xs text-[#64748b]">
-              <span className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                Secure
+          <div className="mt-6 sm:mt-8 pt-4 sm:pt-6 border-t border-white/10">
+            <div className="flex items-center justify-center gap-4 sm:gap-6 text-xs text-[#64748b]">
+              <span className="flex items-center gap-1.5">
+                <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-green-400 rounded-full"></div>
+                <span className="text-xs sm:text-xs">Secure</span>
               </span>
-              <span className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                Fast
+              <span className="flex items-center gap-1.5">
+                <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-blue-400 rounded-full"></div>
+                <span className="text-xs sm:text-xs">Fast</span>
               </span>
-              <span className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                Private
+              <span className="flex items-center gap-1.5">
+                <div className="w-1.5 sm:w-2 h-1.5 sm:h-2 bg-purple-400 rounded-full"></div>
+                <span className="text-xs sm:text-xs">Private</span>
               </span>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-[#64748b] text-sm leading-relaxed">
+        <div className="mt-6 sm:mt-8 text-center px-4 sm:px-0">
+          <p className="text-[#64748b] text-xs sm:text-sm leading-relaxed">
             By signing in, you agree to our{" "}
             <a
               href="#"
