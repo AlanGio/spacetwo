@@ -258,6 +258,7 @@ export default function ProjectView({
                     key={project.id}
                     project={project}
                     index={index}
+                    projectName={selectedProject || ""}
                   />
                 ))}
               </motion.div>

@@ -1,31 +1,38 @@
-"use client"
+"use client";
 
-import { Play, Heart, MessageCircle, Share, Download, MoreHorizontal } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Image from "next/image"
-import { motion } from "framer-motion"
-import Header from "../Header"
-import Sidebar from "../Sidebar"
-import ChatPanel from "../ChatPanel"
-import UsersPanel from "../UsersPanel"
-import AddNewPanel from "../AddNewPanel"
-import type { FileDetail, SidebarProfile } from "../../lib/data-service"
+import {
+  Play,
+  Heart,
+  MessageCircle,
+  Share,
+  Download,
+  MoreHorizontal,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import { motion } from "framer-motion";
+import Header from "../Header";
+import Sidebar from "../Sidebar";
+import ChatPanel from "../ChatPanel";
+import UsersPanel from "../UsersPanel";
+import AddNewPanel from "../AddNewPanel";
+import type { FileDetail, SidebarProfile } from "../../lib/data-service";
 
 interface FileDetailPagePresentationProps {
-  fileId: string
-  projectName?: string
-  fileData: FileDetail | null
-  sidebarProfiles: SidebarProfile[]
-  onSidebarClick: (profile: SidebarProfile) => void
-  onBackToCommunity: () => void
-  isChatOpen: boolean
-  isUsersOpen: boolean
-  isAddOpen: boolean
-  isLiked: boolean
-  onChatToggle: () => void
-  onUsersToggle: () => void
-  onAddToggle: () => void
-  onLikeToggle: () => void
+  fileId: string;
+  projectName?: string;
+  fileData: FileDetail | null;
+  sidebarProfiles: SidebarProfile[];
+  onSidebarClick: (profile: SidebarProfile) => void;
+  onBackToCommunity: () => void;
+  isChatOpen: boolean;
+  isUsersOpen: boolean;
+  isAddOpen: boolean;
+  isLiked: boolean;
+  onChatToggle: () => void;
+  onUsersToggle: () => void;
+  onAddToggle: () => void;
+  onLikeToggle: () => void;
 }
 
 const pageVariants = {
@@ -43,7 +50,7 @@ const pageVariants = {
     opacity: 0,
     transition: { duration: 0.2 },
   },
-}
+};
 
 const contentVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -57,7 +64,7 @@ const contentVariants = {
       duration: 0.6,
     },
   },
-}
+};
 
 const imageVariants = {
   hidden: { opacity: 0, scale: 0.9 },
@@ -69,7 +76,7 @@ const imageVariants = {
       ease: [0.25, 0.1, 0.25, 1],
     },
   },
-}
+};
 
 const tagVariants = {
   hidden: { opacity: 0, x: -20 },
@@ -90,7 +97,7 @@ const tagVariants = {
       damping: 10,
     },
   },
-}
+};
 
 const sidebarVariants = {
   hidden: { opacity: 0, x: -20 },
@@ -102,7 +109,7 @@ const sidebarVariants = {
       ease: "easeOut",
     },
   },
-}
+};
 
 export default function FileDetailPagePresentation({
   fileId,
@@ -120,7 +127,7 @@ export default function FileDetailPagePresentation({
   onAddToggle,
   onLikeToggle,
 }: FileDetailPagePresentationProps) {
-  const isPanelOpen = isChatOpen || isUsersOpen || isAddOpen
+  const isPanelOpen = isChatOpen || isUsersOpen || isAddOpen;
 
   // Handle file not found
   if (!fileData) {
@@ -144,19 +151,33 @@ export default function FileDetailPagePresentation({
           isAddOpen={false}
         />
         <div className="flex flex-1 overflow-hidden">
-          <Sidebar profiles={sidebarProfiles} selectedProject={projectName || null} onProfileClick={() => {}} />
-          <motion.div className="flex-1 flex items-center justify-center" variants={contentVariants}>
+          <Sidebar
+            profiles={sidebarProfiles}
+            selectedProject={projectName || null}
+            onProfileClick={() => {}}
+          />
+          <motion.div
+            className="flex-1 flex items-center justify-center p-4"
+            variants={contentVariants}
+          >
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-white mb-4">File Not Found</h1>
-              <p className="text-[#827989] mb-6">The file you're looking for doesn't exist.</p>
-              <Button onClick={onBackToCommunity} className="bg-[#5865f2] hover:bg-[#4752c4] text-white">
+              <h1 className="text-xl sm:text-2xl font-bold text-white mb-4">
+                File Not Found
+              </h1>
+              <p className="text-[#827989] mb-6 text-sm sm:text-base">
+                The file you're looking for doesn't exist.
+              </p>
+              <Button
+                onClick={onBackToCommunity}
+                className="bg-[#5865f2] hover:bg-[#4752c4] text-white"
+              >
                 Go Back
               </Button>
             </div>
           </motion.div>
         </div>
       </motion.div>
-    )
+    );
   }
 
   return (
@@ -180,22 +201,35 @@ export default function FileDetailPagePresentation({
       />
 
       <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - Now visible on mobile */}
         <motion.div variants={sidebarVariants}>
-          <Sidebar profiles={sidebarProfiles} selectedProject={projectName || null} onProfileClick={onSidebarClick} />
+          <Sidebar
+            profiles={sidebarProfiles}
+            selectedProject={projectName || null}
+            onProfileClick={onSidebarClick}
+          />
         </motion.div>
 
         <div className="flex flex-1 overflow-hidden">
           {/* Main Content Area */}
           <div
-            className={`flex flex-col overflow-hidden transition-all duration-300 ${isPanelOpen ? "w-2/3" : "w-full"}`}
+            className={`flex flex-col overflow-hidden transition-all duration-300 ${
+              isPanelOpen ? "w-full md:w-2/3" : "w-full"
+            }`}
           >
             <div className="flex-1 overflow-y-auto">
-              <motion.div className="max-w-6xl mx-auto p-8" variants={contentVariants}>
+              <motion.div
+                className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8"
+                variants={contentVariants}
+              >
                 {/* File Header */}
-                <motion.div className="flex items-center justify-between mb-8" variants={contentVariants}>
-                  <div className="flex items-center gap-6">
+                <motion.div
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4"
+                  variants={contentVariants}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 min-w-0">
                     <motion.h1
-                      className="text-4xl font-bold text-white"
+                      className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white truncate"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2, duration: 0.6 }}
@@ -204,24 +238,28 @@ export default function FileDetailPagePresentation({
                     </motion.h1>
 
                     <motion.div
-                      className="flex items-center gap-4 text-[#827989]"
+                      className="flex items-center gap-3 sm:gap-4 text-[#827989]"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 }}
                     >
                       {fileData.type === "animation" && (
-                        <Button variant="ghost" size="sm" className="text-[#827989] hover:text-white">
-                          <Play className="w-4 h-4 mr-2" />
-                          Play
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-[#827989] hover:text-white p-2"
+                        >
+                          <Play className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2" />
+                          <span className="hidden sm:inline">Play</span>
                         </Button>
                       )}
-                      <span className="text-sm">Shots</span>
-                      <div className="w-6 h-6 rounded-full border border-[#333333]" />
+                      <span className="text-xs sm:text-sm">Shots</span>
+                      <div className="w-5 sm:w-6 h-5 sm:h-6 rounded-full border border-[#333333]" />
                     </motion.div>
                   </div>
 
                   <motion.div
-                    className="flex items-center gap-3"
+                    className="flex items-center gap-2 sm:gap-3 self-start sm:self-auto"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
@@ -229,25 +267,24 @@ export default function FileDetailPagePresentation({
                     <Image
                       src={fileData.author.avatar || "/placeholder.svg"}
                       alt={fileData.author.name}
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-full object-cover"
+                      width={32}
+                      height={32}
+                      className="w-8 sm:w-10 h-8 sm:h-10 rounded-full object-cover"
                     />
                     <Image
                       src="https://picsum.photos/seed/collab1/100/100"
                       alt="Collaborator"
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-full object-cover -ml-3 border-2 border-[#111111]"
+                      width={32}
+                      height={32}
+                      className="w-8 sm:w-10 h-8 sm:h-10 rounded-full object-cover -ml-2 sm:-ml-3 border-2 border-[#111111]"
                     />
                   </motion.div>
                 </motion.div>
 
                 {/* Main Image/Video */}
                 <motion.div
-                  className="relative rounded-2xl overflow-hidden mb-8 bg-[#111111]"
+                  className="relative rounded-xl sm:rounded-2xl overflow-hidden mb-6 sm:mb-8 bg-[#111111] aspect-[4/3] sm:aspect-video"
                   variants={imageVariants}
-                  style={{ aspectRatio: "16/9" }}
                 >
                   <Image
                     src={fileData.image || "/placeholder.svg"}
@@ -264,22 +301,24 @@ export default function FileDetailPagePresentation({
                     >
                       <Button
                         size="lg"
-                        className="w-16 h-16 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm"
+                        className="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-sm"
                       >
-                        <Play className="w-6 h-6 ml-1" />
+                        <Play className="w-4 sm:w-6 h-4 sm:h-6 ml-0.5 sm:ml-1" />
                       </Button>
                     </motion.div>
                   )}
                 </motion.div>
 
                 {/* Description */}
-                <motion.div className="mb-8" variants={contentVariants}>
-                  <p className="text-[#cccccc] text-lg leading-relaxed max-w-4xl">{fileData.description}</p>
+                <motion.div className="mb-6 sm:mb-8" variants={contentVariants}>
+                  <p className="text-[#cccccc] text-base sm:text-lg leading-relaxed max-w-4xl">
+                    {fileData.description}
+                  </p>
                 </motion.div>
 
                 {/* Tags */}
                 <motion.div
-                  className="flex flex-wrap gap-3 mb-8"
+                  className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
@@ -287,7 +326,7 @@ export default function FileDetailPagePresentation({
                   {fileData.tags.map((tag, index) => (
                     <motion.button
                       key={tag}
-                      className="px-4 py-2 bg-transparent border border-[#333333] rounded-full text-[#827989] hover:text-white hover:border-[#666666] transition-colors"
+                      className="px-3 sm:px-4 py-1.5 sm:py-2 bg-transparent border border-[#333333] rounded-full text-[#827989] hover:text-white hover:border-[#666666] transition-colors text-sm sm:text-base touch-manipulation"
                       variants={tagVariants}
                       initial="hidden"
                       animate="visible"
@@ -302,40 +341,62 @@ export default function FileDetailPagePresentation({
 
                 {/* Actions */}
                 <motion.div
-                  className="flex items-center justify-between pt-6 border-t border-[#333333]"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 sm:pt-6 border-t border-[#333333] gap-4 sm:gap-0"
                   variants={contentVariants}
                 >
-                  <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className={`flex items-center gap-2 ${
-                        isLiked ? "text-red-500" : "text-[#827989] hover:text-white"
+                      className={`flex items-center gap-2 p-2 touch-manipulation ${
+                        isLiked
+                          ? "text-red-500"
+                          : "text-[#827989] hover:text-white"
                       }`}
                       onClick={onLikeToggle}
                     >
-                      <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-                      {fileData.stats.likes + (isLiked ? 1 : 0)}
+                      <Heart
+                        className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`}
+                      />
+                      <span className="text-sm sm:text-base">
+                        {fileData.stats.likes + (isLiked ? 1 : 0)}
+                      </span>
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-[#827989] hover:text-white flex items-center gap-2"
+                      className="text-[#827989] hover:text-white flex items-center gap-2 p-2 touch-manipulation"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      {fileData.stats.comments}
+                      <span className="text-sm sm:text-base">
+                        {fileData.stats.comments}
+                      </span>
                     </Button>
-                    <span className="text-[#827989] text-sm">{fileData.stats.views} views</span>
+                    <span className="text-[#827989] text-xs sm:text-sm">
+                      {fileData.stats.views} views
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" className="text-[#827989] hover:text-white">
+                  <div className="flex items-center gap-2 justify-start sm:justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#827989] hover:text-white p-2 touch-manipulation"
+                    >
                       <Share className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-[#827989] hover:text-white">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#827989] hover:text-white p-2 touch-manipulation"
+                    >
                       <Download className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-[#827989] hover:text-white">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-[#827989] hover:text-white p-2 touch-manipulation"
+                    >
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </div>
@@ -343,37 +404,48 @@ export default function FileDetailPagePresentation({
 
                 {/* Author Info */}
                 <motion.div
-                  className="flex items-center gap-4 mt-8 p-6 bg-[#1a1a1a] rounded-xl"
+                  className="flex flex-col sm:flex-row sm:items-center gap-4 mt-6 sm:mt-8 p-4 sm:p-6 bg-[#1a1a1a] rounded-xl"
                   variants={contentVariants}
                 >
                   <Image
                     src={fileData.author.avatar || "/placeholder.svg"}
                     alt={fileData.author.name}
-                    width={60}
-                    height={60}
-                    className="w-15 h-15 rounded-full object-cover"
+                    width={48}
+                    height={48}
+                    className="w-12 sm:w-15 h-12 sm:h-15 rounded-full object-cover"
                   />
-                  <div className="flex-1">
-                    <h3 className="text-white font-semibold text-lg">{fileData.author.name}</h3>
-                    <p className="text-[#827989]">{fileData.author.username}</p>
-                    <p className="text-[#827989] text-sm mt-1">Created {fileData.createdAt}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-white font-semibold text-base sm:text-lg truncate">
+                      {fileData.author.name}
+                    </h3>
+                    <p className="text-[#827989] text-sm sm:text-base">
+                      {fileData.author.username}
+                    </p>
+                    <p className="text-[#827989] text-xs sm:text-sm mt-1">
+                      Created {fileData.createdAt}
+                    </p>
                   </div>
-                  <Button className="bg-[#5865f2] hover:bg-[#4752c4] text-white">Follow</Button>
+                  <Button className="bg-[#5865f2] hover:bg-[#4752c4] text-white self-start sm:self-auto touch-manipulation">
+                    Follow
+                  </Button>
                 </motion.div>
               </motion.div>
             </div>
           </div>
 
-          {/* Chat Panel */}
+          {/* Panels - Hidden on mobile */}
           {isChatOpen && (
-            <div className="w-1/3 flex-shrink-0">
-              <ChatPanel projectName={projectName || "Community"} isOpen={isChatOpen} onClose={() => onChatToggle()} />
+            <div className="hidden md:block w-1/3 flex-shrink-0">
+              <ChatPanel
+                projectName={projectName || "Community"}
+                isOpen={isChatOpen}
+                onClose={() => onChatToggle()}
+              />
             </div>
           )}
 
-          {/* Users Panel */}
           {isUsersOpen && (
-            <div className="w-1/3 flex-shrink-0">
+            <div className="hidden md:block w-1/3 flex-shrink-0">
               <UsersPanel
                 projectName={projectName || "Community"}
                 isOpen={isUsersOpen}
@@ -382,9 +454,8 @@ export default function FileDetailPagePresentation({
             </div>
           )}
 
-          {/* Add New Panel */}
           {isAddOpen && (
-            <div className="w-1/3 flex-shrink-0">
+            <div className="hidden md:block w-1/3 flex-shrink-0">
               <AddNewPanel
                 projectName={projectName}
                 isOpen={isAddOpen}
@@ -396,5 +467,5 @@ export default function FileDetailPagePresentation({
         </div>
       </div>
     </motion.div>
-  )
+  );
 }
