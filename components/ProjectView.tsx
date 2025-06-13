@@ -1,11 +1,17 @@
 "use client";
 
-import { ChevronDown, Grid3X3, List, Check } from "lucide-react";
+import { ChevronDown, Grid3X3, List, Check, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import ProjectCard from "./ProjectCard";
 import ProjectListItem from "./ProjectListItem";
+import {
+  uploadFiles,
+  revokeObjectURLs,
+  type UploadedFile,
+} from "@/lib/file-service";
+import { CustomToast, CustomToastContainer } from "./ui/toast";
 
 interface ProjectFile {
   id: number;
@@ -108,14 +114,19 @@ export default function ProjectView({
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState<SortOption>("Last modified");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [toasts, setToasts] = useState<CustomToast[]>([]);
+  const dragCounter = useRef(0);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
 
   // Enhance projects with mock data for sorting
   const enhancedProjects: ProjectCardData[] = currentProjects.map(
     (project) => ({
       ...project,
       lastUpdatedTimestamp: getTimestampFromString(project.lastUpdated),
-      likes: Math.floor(Math.random() * 150) + 20, // Random likes between 20-170
-      comments: Math.floor(Math.random() * 40) + 5, // Random comments between 5-45
+      likes: Math.floor(Math.random() * 150) + 20,
+      comments: Math.floor(Math.random() * 40) + 5,
     })
   );
 
@@ -138,8 +149,116 @@ export default function ProjectView({
     setIsDropdownOpen(false);
   };
 
+  const handleDragEnter = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Global drag enter");
+    if (e.dataTransfer?.types.includes("Files")) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Global drag leave");
+
+    // Only set dragging to false if we're leaving the window
+    if (e.relatedTarget === null) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const addToast = useCallback((toast: Omit<CustomToast, "id">) => {
+    const id = Math.random().toString(36).substring(7);
+    setToasts((prev) => [...prev, { ...toast, id }]);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
+  const handleDrop = async (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Drop event triggered");
+    setIsDragging(false);
+
+    if (!e.dataTransfer?.files.length) return;
+
+    const files = Array.from(e.dataTransfer.files);
+    console.log(
+      "Dropped files:",
+      files.map((f) => f.name)
+    );
+
+    setIsUploading(true);
+    try {
+      const result = await uploadFiles(files);
+
+      if (result.success) {
+        addToast({
+          type: "success",
+          title: "Files uploaded successfully",
+          description: `${result.files.length} file${
+            result.files.length === 1 ? "" : "s"
+          } uploaded`,
+        });
+
+        console.log("Uploaded files:", result.files);
+      }
+
+      if (result.errors.length > 0) {
+        result.errors.forEach((error) => {
+          addToast({
+            type: "error",
+            title: `Failed to upload ${error.fileName}`,
+            description: error.error,
+          });
+        });
+      }
+
+      setTimeout(() => {
+        revokeObjectURLs(result.files);
+      }, 5000);
+    } catch (error) {
+      addToast({
+        type: "error",
+        title: "Upload failed",
+        description:
+          error instanceof Error ? error.message : "An error occurred",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Add event listeners to the document
+    document.addEventListener("dragenter", handleDragEnter);
+    document.addEventListener("dragover", handleDragOver);
+    document.addEventListener("dragleave", handleDragLeave);
+    document.addEventListener("drop", handleDrop);
+
+    return () => {
+      // Clean up event listeners
+      document.removeEventListener("dragenter", handleDragEnter);
+      document.removeEventListener("dragover", handleDragOver);
+      document.removeEventListener("dragleave", handleDragLeave);
+      document.removeEventListener("drop", handleDrop);
+    };
+  }, []); // Empty dependency array since we don't use any external values
+
   return (
-    <>
+    <div className="flex flex-col h-full" ref={dropZoneRef}>
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#333333] bg-[#111111] flex-shrink-0">
         {/* Sort Dropdown */}
         <div className="relative">
@@ -184,7 +303,6 @@ export default function ProjectView({
             )}
           </AnimatePresence>
         </div>
-
         <div className="flex items-center gap-1 sm:gap-2">
           <motion.span
             className="text-xs text-[#827989] hidden sm:inline"
@@ -223,7 +341,36 @@ export default function ProjectView({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative">
+        {/* Drag & Drop Overlay */}
+        <AnimatePresence>
+          {(isDragging || isUploading) && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-[#1a1a1a]/90 backdrop-blur-sm flex items-center justify-center"
+            >
+              <div className="border-2 border-dashed border-[#444444] rounded-xl p-12 bg-[#1a1a1a]/50">
+                <div className="text-center">
+                  <Upload
+                    className={`w-16 h-16 text-[#827989] mx-auto mb-6 ${
+                      isUploading ? "animate-bounce" : ""
+                    }`}
+                  />
+                  <p className="text-white text-xl font-medium mb-2">
+                    {isUploading ? "Uploading files..." : "Drop files here"}
+                  </p>
+                  <p className="text-[#827989] text-sm">
+                    Supported formats: PNG, JPG, GIF, SVG
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Content */}
         <div className="p-4 sm:p-6">
           <AnimatePresence mode="wait">
             {viewMode === "grid" ? (
@@ -266,7 +413,6 @@ export default function ProjectView({
           </AnimatePresence>
         </div>
       </div>
-
       {/* Click outside to close dropdown */}
       {isDropdownOpen && (
         <div
@@ -274,6 +420,7 @@ export default function ProjectView({
           onClick={() => setIsDropdownOpen(false)}
         />
       )}
-    </>
+      <CustomToastContainer toasts={toasts} onClose={removeToast} />
+    </div>
   );
 }

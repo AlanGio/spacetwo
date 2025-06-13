@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ChevronDown,
   Grid3X3,
@@ -8,6 +8,7 @@ import {
   ImageIcon,
   Play,
   Check,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -16,6 +17,14 @@ import PresentationMode from "./PresentationMode";
 import FileListItem from "./FileListItem";
 import { useRouter } from "next/navigation";
 import { toSlug } from "../lib/url-utils";
+import {
+  uploadFiles,
+  revokeObjectURLs,
+  type UploadedFile,
+} from "@/lib/file-service";
+import { CustomToast, CustomToastContainer } from "./ui/toast";
+
+const STORAGE_KEY_PREFIX = "spacetwo_uploaded_files_";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -177,7 +186,188 @@ export default function DetailCardView({
   const [navigatingFileId, setNavigatingFileId] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("Last modified");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [toasts, setToasts] = useState<CustomToast[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<DetailFile[]>(() => {
+    // Initialize from localStorage if available
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem(`${STORAGE_KEY_PREFIX}${cardId}`);
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.error("Error parsing stored files:", e);
+        }
+      }
+    }
+    return [];
+  });
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  const addToast = useCallback((toast: Omit<CustomToast, "id">) => {
+    const id = Math.random().toString(36).substring(7);
+    setToasts((prev) => [...prev, { ...toast, id }]);
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
+  }, []);
+
+  // Save to localStorage whenever uploadedFiles changes
+  useEffect(() => {
+    if (uploadedFiles.length > 0) {
+      localStorage.setItem(
+        `${STORAGE_KEY_PREFIX}${cardId}`,
+        JSON.stringify(uploadedFiles)
+      );
+    }
+  }, [uploadedFiles, cardId]);
+
+  // Function to create a new DetailFile from an UploadedFile
+  const createDetailFile = useCallback(
+    (uploadedFile: UploadedFile): DetailFile => {
+      const now = Date.now();
+      return {
+        id: uploadedFile.id.toString(),
+        name: `File ${uploadedFile.id}`,
+        type: uploadedFile.type as "image" | "video" | "design",
+        preview: uploadedFile.image,
+        lastEdited: "Edited just now",
+        lastModifiedTimestamp: now,
+        likes: 0,
+        comments: 0,
+        collaborators: [
+          {
+            id: 1,
+            avatar: `https://picsum.photos/seed/user${uploadedFile.id}1/100/100`,
+            name: "You",
+          },
+        ],
+        additionalCollaborators: 0,
+      };
+    },
+    []
+  );
+
+  // Function to handle file upload and storage
+  const handleFileUpload = useCallback(
+    async (files: File[]) => {
+      setIsUploading(true);
+      try {
+        const result = await uploadFiles(files);
+
+        if (result.success) {
+          const newDetailFiles = result.files.map(createDetailFile);
+          setUploadedFiles((prev) => {
+            const updated = [...prev, ...newDetailFiles];
+            return updated;
+          });
+
+          addToast({
+            type: "success",
+            title: "Files uploaded successfully",
+            description: `${result.files.length} file${
+              result.files.length === 1 ? "" : "s"
+            } uploaded`,
+          });
+        }
+
+        if (result.errors.length > 0) {
+          result.errors.forEach((error) => {
+            addToast({
+              type: "error",
+              title: `Failed to upload ${error.fileName}`,
+              description: error.error,
+            });
+          });
+        }
+
+        setTimeout(() => {
+          revokeObjectURLs(result.files);
+        }, 5000);
+      } catch (error) {
+        addToast({
+          type: "error",
+          title: "Upload failed",
+          description:
+            error instanceof Error ? error.message : "An error occurred",
+        });
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [addToast, createDetailFile]
+  );
+
+  useEffect(() => {
+    const handleDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer?.types.includes("Files")) {
+        setIsDragging(true);
+      }
+    };
+
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = "copy";
+      }
+    };
+
+    const handleDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.relatedTarget === null) {
+        setIsDragging(false);
+      }
+    };
+
+    const handleDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+
+      if (!e.dataTransfer?.files.length) return;
+      const files = Array.from(e.dataTransfer.files);
+      await handleFileUpload(files);
+    };
+
+    document.addEventListener("dragenter", handleDragEnter);
+    document.addEventListener("dragover", handleDragOver);
+    document.addEventListener("dragleave", handleDragLeave);
+    document.addEventListener("drop", handleDrop);
+
+    return () => {
+      document.removeEventListener("dragenter", handleDragEnter);
+      document.removeEventListener("dragover", handleDragOver);
+      document.removeEventListener("dragleave", handleDragLeave);
+      document.removeEventListener("drop", handleDrop);
+    };
+  }, [handleFileUpload]);
+
+  // Function to remove a file
+  const handleRemoveFile = useCallback(
+    (fileId: string) => {
+      setUploadedFiles((prev) => {
+        const updated = prev.filter((f) => f.id !== fileId);
+        if (updated.length === 0) {
+          // If no more uploaded files, remove from localStorage
+          localStorage.removeItem(`${STORAGE_KEY_PREFIX}${cardId}`);
+        }
+        return updated;
+      });
+      addToast({
+        type: "success",
+        title: "File removed",
+        description: "The file has been removed from your uploads",
+      });
+    },
+    [cardId, addToast]
+  );
 
   // Generate files with mock data for sorting - keep original file IDs
   // Use useMemo or keep this stable to prevent re-sorting during navigation
@@ -220,10 +410,13 @@ export default function DetailCardView({
       };
     }) || [];
 
-  // Sort files based on selected option - only when not navigating
+  // Combine base files with uploaded files
+  const allFiles = [...(baseFiles || []), ...uploadedFiles];
+
+  // Sort all files based on selected option
   const sortedFiles = navigatingFileId
-    ? baseFiles // Keep original order during navigation to prevent reordering
-    : [...baseFiles].sort((a, b) => {
+    ? allFiles
+    : [...allFiles].sort((a, b) => {
         switch (sortBy) {
           case "Last modified":
             return b.lastModifiedTimestamp - a.lastModifiedTimestamp;
@@ -279,6 +472,7 @@ export default function DetailCardView({
       animate="visible"
       exit="exit"
       className="flex flex-col h-full"
+      ref={dropZoneRef}
     >
       {/* Page Header */}
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-[#333333] bg-[#111111] flex-shrink-0">
@@ -348,7 +542,6 @@ export default function DetailCardView({
             )}
           </AnimatePresence>
         </div>
-
         <div className="flex items-center gap-1 sm:gap-2">
           <motion.span
             className="text-xs text-[#827989] hidden sm:inline"
@@ -389,7 +582,35 @@ export default function DetailCardView({
       </div>
 
       {/* Files Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative">
+        {/* Drag & Drop Overlay */}
+        <AnimatePresence>
+          {(isDragging || isUploading) && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 z-50 bg-[#1a1a1a]/90 backdrop-blur-sm flex items-center justify-center"
+            >
+              <div className="border-2 border-dashed border-[#444444] rounded-xl p-12 bg-[#1a1a1a]/50">
+                <div className="text-center">
+                  <Upload
+                    className={`w-16 h-16 text-[#827989] mx-auto mb-6 ${
+                      isUploading ? "animate-bounce" : ""
+                    }`}
+                  />
+                  <p className="text-white text-xl font-medium mb-2">
+                    {isUploading ? "Uploading files..." : "Drop files here"}
+                  </p>
+                  <p className="text-[#827989] text-sm">
+                    Supported formats: PNG, JPG, GIF, SVG
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <div className="p-4 sm:p-6">
           <motion.div
             key={`${viewMode}-view-${sortBy}`}
@@ -407,16 +628,40 @@ export default function DetailCardView({
               viewMode === "grid" ? (
                 <motion.div
                   key={file.id}
-                  className="group cursor-pointer"
+                  className="group cursor-pointer relative"
                   variants={cardVariants}
-                  whileHover={navigatingFileId ? {} : "hover"} // Disable hover during navigation
-                  whileTap={navigatingFileId ? {} : "tap"} // Disable tap during navigation
+                  whileHover={navigatingFileId ? {} : "hover"}
+                  whileTap={navigatingFileId ? {} : "tap"}
                   custom={index}
-                  onClick={() => !navigatingFileId && handleFileClick(file.id)} // Prevent multiple clicks
+                  onClick={() => !navigatingFileId && handleFileClick(file.id)}
                   style={{
-                    pointerEvents: navigatingFileId ? "none" : "auto", // Disable all interactions during navigation
+                    pointerEvents: navigatingFileId ? "none" : "auto",
                   }}
                 >
+                  {/* Add remove button for uploaded files */}
+                  {uploadedFiles.some((f) => f.id === file.id) && (
+                    <button
+                      className="absolute top-2 right-2 z-10 bg-black/70 backdrop-blur-sm rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveFile(file.id);
+                      }}
+                    >
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  )}
                   <div
                     className={`bg-[#1a1a1a] rounded-xl overflow-hidden transition-all duration-300 hover:bg-[#222222] border border-[#333333] hover:border-[#444444] ${
                       navigatingFileId === file.id ? "opacity-70" : ""
@@ -518,6 +763,11 @@ export default function DetailCardView({
                   key={file.id}
                   file={file}
                   projectName={projectName}
+                  onRemove={
+                    uploadedFiles.some((f) => f.id === file.id)
+                      ? handleRemoveFile
+                      : undefined
+                  }
                 />
               )
             )}
@@ -540,6 +790,8 @@ export default function DetailCardView({
           onClick={() => setIsDropdownOpen(false)}
         />
       )}
+
+      <CustomToastContainer toasts={toasts} onClose={removeToast} />
     </motion.div>
   );
 }

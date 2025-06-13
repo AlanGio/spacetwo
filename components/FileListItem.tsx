@@ -25,6 +25,7 @@ interface DetailFile {
 interface FileListItemProps {
   file: DetailFile;
   projectName: string;
+  onRemove?: (fileId: string) => void;
 }
 
 const fileItemVariants = {
@@ -74,55 +75,43 @@ const getFileTypeColor = (type: string) => {
   }
 };
 
-const FileListItem: React.FC<FileListItemProps> = ({ file, projectName }) => {
+const FileListItem: React.FC<FileListItemProps> = ({
+  file,
+  projectName,
+  onRemove,
+}) => {
   const router = useRouter();
-  const [navigatingFileId, setNavigatingFileId] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleFileClick = async (fileId: string) => {
-    setNavigatingFileId(fileId);
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    router.push(`/project/${toSlug(projectName)}/file/${fileId}`);
+  const handleClick = async () => {
+    setIsNavigating(true);
+    router.push(`/project/${toSlug(projectName)}/file/${file.id}`);
   };
-
-  const isNavigating = navigatingFileId === file.id;
 
   return (
     <motion.div
-      variants={fileItemVariants}
-      initial="hidden"
-      animate="visible"
-      whileHover="hover"
-      whileTap={{ scale: 0.98 }}
       className={`group cursor-pointer touch-manipulation ${
         isNavigating ? "opacity-60" : ""
       }`}
-      onClick={() => handleFileClick(file.id)}
+      variants={fileItemVariants}
+      initial="hidden"
+      animate="visible"
+      exit="exit"
+      whileHover="hover"
+      whileTap={{ scale: 0.98 }}
+      onClick={handleClick}
     >
-      <div className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl hover:bg-[#1a1a1a] transition-all duration-200 border border-transparent hover:border-[#333333]">
-        {/* File Preview */}
-        <div className="relative w-12 sm:w-16 h-12 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 bg-[#222222]">
-          {file.preview ? (
-            <Image
-              src={file.preview}
-              alt={file.name}
-              fill
-              className="object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#333333] to-[#222222]">
-              <div className={`${getFileTypeColor(file.type)}`}>
-                {getFileIcon(file.type)}
-              </div>
-            </div>
-          )}
-
-          {/* File Type Badge */}
-          <div className="absolute top-1 right-1">
-            <div
-              className={`w-6 h-6 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center ${getFileTypeColor(
-                file.type
-              )}`}
-            >
+      <div className="flex items-center gap-3 sm:gap-6 p-3 sm:p-4 rounded-lg hover:bg-[#1a1a1a] transition-colors relative">
+        {/* Thumbnail */}
+        <div className="relative w-16 sm:w-24 h-12 sm:h-16 rounded-lg flex-shrink-0 overflow-hidden">
+          <Image
+            src={file.preview || "/placeholder.svg"}
+            alt={file.name}
+            fill
+            className="object-cover"
+          />
+          <div className="absolute bottom-1 sm:bottom-2 left-1 sm:left-2">
+            <div className="w-6 sm:w-7 h-6 sm:h-7 bg-black/70 backdrop-blur-sm rounded-lg flex items-center justify-center text-white">
               {getFileIcon(file.type)}
             </div>
           </div>
@@ -130,103 +119,41 @@ const FileListItem: React.FC<FileListItemProps> = ({ file, projectName }) => {
 
         {/* File Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
-            {/* File Name */}
-            <div className="min-w-0 flex-1">
-              <h4 className="text-white font-medium text-sm sm:text-base truncate group-hover:text-blue-400 transition-colors">
-                {file.name}
-              </h4>
-
-              {/* Mobile: Show type and last edited */}
-              <div className="sm:hidden flex items-center gap-2 mt-1">
-                <span
-                  className={`text-xs capitalize ${getFileTypeColor(
-                    file.type
-                  )}`}
-                >
-                  {file.type}
-                </span>
-                <span className="text-[#827989] text-xs">•</span>
-                <div className="flex items-center gap-1 text-[#827989] text-xs">
-                  <Clock className="w-3 h-3" />
-                  {file.lastEdited}
-                </div>
-              </div>
-            </div>
-
-            {/* Desktop: Metadata */}
-            <div className="hidden sm:flex sm:items-center sm:gap-6">
-              {/* File Type */}
-              <div
-                className={`flex items-center gap-1 text-xs capitalize ${getFileTypeColor(
-                  file.type
-                )}`}
-              >
-                {getFileIcon(file.type)}
-                {file.type}
-              </div>
-
-              {/* Last Edited */}
-              <div className="flex items-center gap-1 text-[#827989] text-xs">
-                <Clock className="w-3 h-3" />
-                {file.lastEdited}
-              </div>
-            </div>
-          </div>
-
-          {/* Collaborators */}
-          <div className="flex items-center gap-2 mt-2 sm:mt-3">
-            <div className="flex -space-x-2">
-              {file.collaborators.slice(0, 3).map((collaborator, index) => (
-                <div
-                  key={collaborator.id}
-                  className="relative"
-                  style={{ zIndex: 3 - index }}
-                >
-                  <Image
-                    src={collaborator.avatar}
-                    alt={collaborator.name}
-                    width={24}
-                    height={24}
-                    className="w-5 sm:w-6 h-5 sm:h-6 rounded-full border-2 border-[#111111] object-cover"
-                  />
-                </div>
-              ))}
-
-              {file.additionalCollaborators &&
-                file.additionalCollaborators > 0 && (
-                  <div className="w-5 sm:w-6 h-5 sm:h-6 rounded-full bg-[#333333] border-2 border-[#111111] flex items-center justify-center">
-                    <span className="text-white text-xs font-medium">
-                      +{file.additionalCollaborators}
-                    </span>
-                  </div>
-                )}
-            </div>
-
-            <div className="flex items-center gap-1 text-[#827989] text-xs">
-              <Users className="w-3 h-3" />
-              <span className="hidden sm:inline">
-                {file.collaborators.length +
-                  (file.additionalCollaborators || 0)}{" "}
-                collaborator
-                {file.collaborators.length +
-                  (file.additionalCollaborators || 0) !==
-                1
-                  ? "s"
-                  : ""}
-              </span>
-              <span className="sm:hidden">
-                {file.collaborators.length +
-                  (file.additionalCollaborators || 0)}
-              </span>
-            </div>
-          </div>
+          <h3 className="text-white font-semibold text-sm sm:text-base truncate">
+            {file.name}
+          </h3>
+          <p className="text-[#827989] text-xs sm:text-sm">{file.lastEdited}</p>
         </div>
 
-        {/* Loading indicator */}
+        {/* Remove Button */}
+        {onRemove && (
+          <button
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-[#333333] rounded-full"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(file.id);
+            }}
+          >
+            <svg
+              className="w-4 h-4 text-[#827989] hover:text-white transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
+
+        {/* Loading Spinner */}
         {isNavigating && (
-          <div className="flex-shrink-0">
-            <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-0 bg-black/20 rounded-lg flex items-center justify-center">
+            <div className="w-6 sm:w-8 h-6 sm:h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
       </div>
