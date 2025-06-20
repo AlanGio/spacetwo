@@ -36,7 +36,6 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const supabase = createClientSupabase();
 
     const { data, error } = await supabase
       .from('projects')
@@ -66,7 +65,6 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const supabase = createClientSupabase();
 
     if (!body.id) {
       return NextResponse.json(
@@ -110,7 +108,6 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const supabase = createClientSupabase();
     const { error } = await supabase
       .from('projects')
       .update({ deleted: true })
